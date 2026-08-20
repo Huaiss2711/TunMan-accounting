@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#cce7f5">
+<title>豚馒记账本 🎻🗡️</title>
+<style>
+  :root {
+    --blue: #cce7f5;
+    --blue-deep: #8fc8e6;
+    --blue-dark: #5ba8d1;
+    --pink: #fdd7e4;
+    --pink-deep: #f7b4cc;
+    --pink-dark: #e889aa;
+    --cream: #fff9f5;
+    --text: #5a4a55;
+    --text-light: #8a7a85;
+    --border: #e6d6de;
+    --shadow: 0 4px 16px rgba(180, 150, 170, 0.15);
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--pink) 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(255,255,255,0.3) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(255,255,255,0.25) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    padding: 24px 20px 16px;
+    text-align: center;
+  }
+  .header-title {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--blue-dark), var(--pink-dark));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  .book-switch {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+    padding: 6px 10px 6px 16px;
+    display: inline-flex;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .book-switch:active { transform: scale(0.97); }
+  .book-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .book-switch-icon {
+    background: linear-gradient(135deg, var(--blue-deep), var(--pink-deep));
+    color: #fff;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  /* ===== Summary Cards ===== */
+  .summary {
+    padding: 0 20px;
+    margin-top: 8px;
+  }
+  .card {
+    background: rgba(255,255,255,0.78);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255,255,255,0.8);
+  }
+  .budget-card {
+    background: linear-gradient(135deg, rgba(204,231,245,0.9), rgba(253,215,228,0.9));
+    margin-bottom: 12px;
+  }
+  .budget-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .budget-label { font-size: 13px; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
+  .budget-edit { font-size: 11px; color: var(--blue-dark); background: rgba(255,255,255,0.6); padding: 3px 10px; border-radius: 20px; cursor: pointer; }
+  .budget-bar {
+    height: 10px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+  }
+  .budget-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue-deep), var(--pink-deep));
+    border-radius: 5px;
+    transition: width 0.4s ease;
+  }
+  .budget-fill.warn { background: linear-gradient(90deg, #ffb36b, var(--pink-deep)); }
+  .budget-fill.danger { background: linear-gradient(90deg, #ff7d7d, var(--pink-dark)); }
+  .budget-amount {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-light);
+  }
+  .budget-amount .spent { color: var(--pink-dark); font-weight: 600; }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .summary-item {
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .summary-item.income { background: linear-gradient(135deg, rgba(204,231,245,0.7), rgba(255,255,255,0.9)); }
+  .summary-item.expense { background: linear-gradient(135deg, rgba(253,215,228,0.7), rgba(255,255,255,0.9)); }
+  .summary-title { font-size: 12px; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
+  .summary-amount {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .summary-item.income .summary-amount { color: var(--blue-dark); }
+  .summary-item.expense .summary-amount { color: var(--pink-dark); }
+
+  /* ===== Month Filter ===== */
+  .month-filter {
+    padding: 16px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+  }
+  .month-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--blue), var(--pink));
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .month-btn:active { transform: scale(0.9); }
+  .month-text { font-size: 14px; font-weight: 600; min-width: 90px; text-align: center; }
+
+  /* ===== Tab ===== */
+  .tabs {
+    padding: 16px 20px 0;
+    display: flex;
+    gap: 8px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.5);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-light);
+    border: 1px solid transparent;
+  }
+  .tab.active {
+    background: rgba(255,255,255,0.9);
+    color: var(--text);
+    border-color: var(--border);
+    box-shadow: var(--shadow);
+  }
+  .tab .tab-icon { font-size: 16px; margin-right: 4px; }
+
+  /* ===== Records ===== */
+  .section { padding: 16px 20px; }
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-title::before {
+    content: "";
+    width: 4px; height: 16px;
+    background: linear-gradient(180deg, var(--blue-deep), var(--pink-deep));
+    border-radius: 2px;
+  }
+  .record-day { margin-bottom: 14px; }
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 4px;
+    font-size: 12px;
+    color: var(--text-light);
+    margin-bottom: 6px;
+  }
+  .day-sum { display: flex; gap: 12px; }
+  .day-sum span { font-weight: 600; }
+  .day-sum .s-in { color: var(--blue-dark); }
+  .day-sum .s-out { color: var(--pink-dark); }
+  .record-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(180,150,170,0.08);
+    transition: all 0.2s;
+    position: relative;
+  }
+  .record-item:active { transform: scale(0.98); }
+  .cat-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .cat-icon.blue { background: linear-gradient(135deg, var(--blue), #fff); }
+  .cat-icon.pink { background: linear-gradient(135deg, var(--pink), #fff); }
+  .record-info { flex: 1; min-width: 0; }
+  .record-cat { font-size: 14px; font-weight: 600; color: var(--text); }
+  .record-note { font-size: 12px; color: var(--text-light); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .record-amount {
+    font-size: 16px;
+    font-weight: 700;
+    text-align: right;
+  }
+  .record-amount.in { color: var(--blue-dark); }
+  .record-amount.out { color: var(--pink-dark); }
+  .record-del {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 22px; height: 22px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-size: 14px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+  }
+  .record-item:hover .record-del, .record-item.show-del .record-del { display: flex; }
+  .empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-light);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 8px; opacity: 0.6; }
+  .empty-text { font-size: 13px; }
+
+  /* ===== Stats Page ===== */
+  .stats-type-switch {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .type-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: rgba(255,255,255,0.5);
+    color: var(--text-light);
+    transition: all 0.2s;
+  }
+  .type-btn.active.expense { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); color: #fff; }
+  .type-btn.active.income { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; }
+
+  .pie-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 16px;
+  }
+  .pie-chart {
+    width: 220px; height: 220px;
+    position: relative;
+  }
+  .pie-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 120px;
+  }
+  .pie-center-label { font-size: 12px; color: var(--text-light); }
+  .pie-center-amount { font-size: 20px; font-weight: 700; color: var(--text); margin-top: 2px; }
+
+  .rank-list { margin-top: 4px; }
+  .rank-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+  .rank-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--pink));
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .rank-num.top1 { background: linear-gradient(135deg, #ffd96b, #ffb347); }
+  .rank-num.top2 { background: linear-gradient(135deg, #d7dce4, #a8b0bd); }
+  .rank-num.top3 { background: linear-gradient(135deg, #e6c9a8, #c69871); }
+  .rank-cat-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-cat { font-size: 14px; font-weight: 600; }
+  .rank-bar {
+    height: 6px;
+    background: rgba(200,180,190,0.2);
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .rank-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+  .rank-amount {
+    text-align: right;
+    font-weight: 700;
+    font-size: 14px;
+    margin-left: 10px;
+    flex-shrink: 0;
+  }
+  .rank-percent { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+
+  /* ===== Bottom Nav ===== */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+    z-index: 100;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-light);
+    transition: color 0.2s;
+  }
+  .nav-item.active { color: var(--pink-dark); }
+  .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-label { font-size: 10px; font-weight: 600; }
+  .nav-add {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-deep), var(--pink-deep));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 28px;
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 6px 20px rgba(180, 130, 160, 0.35);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .nav-add:active { transform: translateX(-50%) scale(0.93); }
+  .add-center { padding-top: 0; margin-top: -24px; }
+  .add-center .nav-icon { opacity: 0; }
+  .add-center .nav-label { color: var(--pink-dark); font-weight: 700; margin-top: 28px; }
+
+  /* ===== Modal ===== */
+  .modal-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(90, 74, 85, 0.45);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-mask.show { display: flex; animation: fadeIn 0.2s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--cream);
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+    max-height: 88vh;
+    overflow-y: auto;
+    animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: rgba(200, 180, 190, 0.2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-light);
+  }
+
+  /* Form */
+  .form-row { margin-bottom: 14px; }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; display: block; }
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: rgba(255,255,255,0.9);
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--pink-deep); }
+  .type-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .type-switch .opt {
+    padding: 11px;
+    text-align: center;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: rgba(255,255,255,0.7);
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .type-switch .opt.expense.active { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); border-color: var(--pink-deep); color: #fff; }
+  .type-switch .opt.income.active { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); border-color: var(--blue-deep); color: #fff; }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .cat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+    background: rgba(255,255,255,0.5);
+  }
+  .cat-item:active { transform: scale(0.92); }
+  .cat-item.active {
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 2px 10px rgba(180, 140, 170, 0.2);
+  }
+  .cat-item.expense.active { border-color: var(--pink-deep); }
+  .cat-item.income.active { border-color: var(--blue-deep); }
+  .cat-item .emoji { font-size: 24px; }
+  .cat-item .name { font-size: 10px; color: var(--text-light); }
+  .cat-item.active .name { color: var(--text); font-weight: 600; }
+
+  .amount-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .amount-prefix {
+    position: absolute;
+    left: 14px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-light);
+  }
+  .amount-input {
+    width: 100%;
+    padding: 14px 14px 14px 34px;
+    font-size: 22px;
+    font-weight: 700;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: rgba(255,255,255,0.9);
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .amount-input:focus { border-color: var(--pink-deep); }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--blue-deep), var(--pink-deep));
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(180, 140, 170, 0.25);
+    transition: transform 0.15s;
+    font-family: inherit;
+    margin-top: 8px;
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-ghost {
+    width: 100%;
+    padding: 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-light);
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-danger-small {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 120, 140, 0.15);
+    color: #e05a78;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  /* Book list */
+  .book-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .book-list-item {
+    display: flex;
+    align-items: center;
+    padding: 14px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 14px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .book-list-item.active { border-color: var(--pink-deep); background: #fff; }
+  .book-list-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue), var(--pink));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-right: 12px;
+  }
+  .book-list-info { flex: 1; min-width: 0; }
+  .book-list-name { font-size: 15px; font-weight: 700; }
+  .book-list-desc { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .book-list-actions { display: flex; gap: 6px; }
+  .book-del-btn {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: rgba(255, 120, 140, 0.15);
+    color: #e05a78;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 16px 0;
+  }
+
+  /* Page transitions */
+  .page { display: none; animation: pageIn 0.25s ease; }
+  .page.active { display: block; }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(90, 74, 85, 0.9);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <span>🎻</span>
+      <span>豚馒记账本</span>
+      <span>🗡️</span>
+    </div>
+    <div class="header-sub">LoveU MissU · 271199</div>
+    <div class="book-switch" onclick="openBookModal()">
+      <span class="book-switch-icon" id="headerBookIcon">💝</span>
+      <span class="book-name" id="headerBookName">默认账本</span>
+      <span style="color:var(--text-light);font-size:12px;">▼</span>
+    </div>
+  </div>
+
+  <!-- Records Page -->
+  <div class="page active" id="page-records">
+    <!-- Summary -->
+    <div class="summary">
+      <div class="card budget-card" id="budgetCard">
+        <div class="budget-row">
+          <span class="budget-label">🦉 本月预算</span>
+          <span class="budget-edit" onclick="openBudgetModal()">设置</span>
+        </div>
+        <div class="budget-bar"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
+        <div class="budget-amount">
+          <span>已支出：<span class="spent" id="budgetSpent">¥0.00</span></span>
+          <span id="budgetTotal">预算 ¥0.00</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="summary-row">
+          <div class="summary-item income">
+            <div class="summary-title">🎻 收入</div>
+            <div class="summary-amount" id="sumIncome">¥0.00</div>
+          </div>
+          <div class="summary-item expense">
+            <div class="summary-title">🗡️ 支出</div>
+            <div class="summary-amount" id="sumExpense">¥0.00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Month Filter -->
+    <div class="month-filter">
+      <div class="month-nav">
+        <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+        <span class="month-text" id="monthText">2026年08月</span>
+        <button class="month-btn" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+
+    <!-- Records -->
+    <div class="section" id="recordsSection">
+      <!-- Records rendered by JS -->
+    </div>
+  </div>
+
+  <!-- Stats Page -->
+  <div class="page" id="page-stats">
+    <div class="summary">
+      <div class="card">
+        <div class="stats-type-switch">
+          <div class="type-btn expense active" id="typeBtnExpense" onclick="switchStatsType('expense')">🗡️ 支出</div>
+          <div class="type-btn income" id="typeBtnIncome" onclick="switchStatsType('income')">🎻 收入</div>
+        </div>
+        <div class="pie-wrap">
+          <div class="pie-chart">
+            <canvas id="pieCanvas" width="220" height="220"></canvas>
+            <div class="pie-center">
+              <div class="pie-center-label" id="pieCenterLabel">总支出</div>
+              <div class="pie-center-amount" id="pieCenterAmount">¥0.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" id="rankTitle">📊 支出分类排行</div>
+      <div class="rank-list" id="rankList">
+        <!-- ranking rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Books Page -->
+  <div class="page" id="page-books">
+    <div class="section">
+      <div class="section-title">📚 我的账本</div>
+      <div class="book-list" id="bookList">
+        <!-- books rendered by JS -->
+      </div>
+      <button class="btn-ghost" onclick="openNewBookModal()">+ 新建账本</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-records" onclick="switchPage('records')">
+    <div class="nav-icon">🦌</div>
+    <div class="nav-label">明细</div>
+  </div>
+  <div class="nav-item add-center" onclick="openAddModal()">
+    <div class="nav-add">+</div>
+    <div class="nav-icon">🦌</div>
+    <div class="nav-label">记一笔</div>
+  </div>
+  <div class="nav-item" id="nav-stats" onclick="switchPage('stats')">
+    <div class="nav-icon">🪵</div>
+    <div class="nav-label">统计</div>
+  </div>
+</div>
+
+<!-- Add Record Modal -->
+<div class="modal-mask" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✨ 记一笔</div>
+      <div class="modal-close" onclick="closeModal('addModal')">✕</div>
+    </div>
+
+    <div class="type-switch">
+      <div class="opt expense active" id="addTypeExpense" onclick="setAddType('expense')">🗡️ 支出</div>
+      <div class="opt income" id="addTypeIncome" onclick="setAddType('income')">🎻 收入</div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">分类</label>
+      <div class="cat-grid" id="catGrid">
+        <!-- categories rendered by JS -->
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">金额</label>
+      <div class="amount-input-wrap">
+        <span class="amount-prefix">¥</span>
+        <input type="number" id="addAmount" class="amount-input" placeholder="0.00" step="0.01" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">日期</label>
+      <input type="date" id="addDate" class="form-input">
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">备注</label>
+      <input type="text" id="addNote" class="form-input" placeholder="可选：记录一下这笔钱的故事～">
+    </div>
+
+    <button class="btn-primary" onclick="saveRecord()">💝 保存记录</button>
+  </div>
+</div>
+
+<!-- Book Modal -->
+<div class="modal-mask" id="bookModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📚 切换账本</div>
+      <div class="modal-close" onclick="closeModal('bookModal')">✕</div>
+    </div>
+    <div class="book-list" id="bookModalList">
+      <!-- rendered by JS -->
+    </div>
+    <button class="btn-ghost" onclick="closeModal('bookModal');openNewBookModal();">+ 新建账本</button>
+  </div>
+</div>
+
+<!-- New Book Modal -->
+<div class="modal-mask" id="newBookModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">💝 新建账本</div>
+      <div class="modal-close" onclick="closeModal('newBookModal')">✕</div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">账本名称</label>
+      <input type="text" id="newBookName" class="form-input" placeholder="例如：约会基金、日常开销">
+    </div>
+    <div class="form-row">
+      <label class="form-label">选择图标</label>
+      <div class="cat-grid" id="bookIconGrid">
+        <div class="cat-item" data-icon="💝" onclick="selectBookIcon(this)"><span class="emoji">💝</span><span class="name">爱心</span></div>
+        <div class="cat-item" data-icon="🎻" onclick="selectBookIcon(this)"><span class="emoji">🎻</span><span class="name">小提琴</span></div>
+        <div class="cat-item" data-icon="🗡️" onclick="selectBookIcon(this)"><span class="emoji">🗡️</span><span class="name">剑</span></div>
+        <div class="cat-item" data-icon="🦌" onclick="selectBookIcon(this)"><span class="emoji">🦌</span><span class="name">鹿</span></div>
+        <div class="cat-item" data-icon="🪵" onclick="selectBookIcon(this)"><span class="emoji">🪵</span><span class="name">木头</span></div>
+        <div class="cat-item" data-icon="🦉" onclick="selectBookIcon(this)"><span class="emoji">🦉</span><span class="name">海德薇</span></div>
+        <div class="cat-item" data-icon="💌" onclick="selectBookIcon(this)"><span class="emoji">💌</span><span class="name">情书</span></div>
+        <div class="cat-item" data-icon="⭐" onclick="selectBookIcon(this)"><span class="emoji">⭐</span><span class="name">星星</span></div>
+        <div class="cat-item" data-icon="🌸" onclick="selectBookIcon(this)"><span class="emoji">🌸</span><span class="name">樱花</span></div>
+        <div class="cat-item" data-icon="🍬" onclick="selectBookIcon(this)"><span class="emoji">🍬</span><span class="name">糖果</span></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">本月预算（可选）</label>
+      <div class="amount-input-wrap">
+        <span class="amount-prefix">¥</span>
+        <input type="number" id="newBookBudget" class="amount-input" placeholder="0.00" step="0.01" inputmode="decimal">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="createBook()">💞 创建账本</button>
+  </div>
+</div>
+
+<!-- Custom Category Modal -->
+<div class="modal-mask" id="customCatModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🎨 自定义分类</div>
+      <div class="modal-close" onclick="closeModal('customCatModal')">✕</div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">选择图标</label>
+      <div class="cat-grid" id="emojiGrid" style="max-height:220px;overflow-y:auto;padding-bottom:6px;">
+        <!-- emojis rendered by JS -->
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">分类名称</label>
+      <input type="text" id="newCatName" class="form-input" placeholder="例如：奶茶、学习资料、党费">
+    </div>
+    <button class="btn-primary" onclick="saveCustomCat()">✨ 创建分类</button>
+  </div>
+</div>
+
+<!-- Budget Modal -->
+<div class="modal-mask" id="budgetModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🦉 设置本月预算</div>
+      <div class="modal-close" onclick="closeModal('budgetModal')">✕</div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">本月预算金额</label>
+      <div class="amount-input-wrap">
+        <span class="amount-prefix">¥</span>
+        <input type="number" id="budgetInput" class="amount-input" placeholder="0.00" step="0.01" inputmode="decimal">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveBudget()">💝 保存</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">已保存 ✨</div>
+
+<script>
+// ===== Data Layer =====
+const STORAGE_KEY = 'cp_accounting_book_v1';
+
+// Default categories - common practical categories
+const DEFAULT_CATEGORIES = {
+  expense: [
+    { id: 'food', name: '餐饮', emoji: '🍜' },
+    { id: 'shopping', name: '购物', emoji: '🛍️' },
+    { id: 'daily', name: '日用', emoji: '🧻' },
+    { id: 'transport', name: '交通', emoji: '🚗' },
+    { id: 'veggie', name: '蔬菜', emoji: '🥦' },
+    { id: 'fruit', name: '水果', emoji: '🍎' },
+    { id: 'snack', name: '零食', emoji: '🧁' },
+    { id: 'sport', name: '运动', emoji: '⚽' },
+    { id: 'entertainment', name: '娱乐', emoji: '🎮' },
+    { id: 'comm', name: '通讯', emoji: '📱' },
+    { id: 'clothes', name: '服饰', emoji: '👗' },
+    { id: 'beauty', name: '美容', emoji: '💄' },
+    { id: 'housing', name: '住房', emoji: '🏠' },
+    { id: 'family', name: '家庭', emoji: '💚' },
+    { id: 'social', name: '社交', emoji: '👥' },
+    { id: 'travel', name: '旅行', emoji: '✈️' },
+    { id: 'digital', name: '数码', emoji: '📷' },
+    { id: 'car', name: '汽车', emoji: '🚙' },
+    { id: 'medical', name: '医疗', emoji: '🏥' },
+    { id: 'study', name: '学习', emoji: '📖' },
+    { id: 'gift', name: '礼物', emoji: '🎁' },
+    { id: 'pet', name: '宠物', emoji: '🐾' },
+    { id: 'office', name: '办公', emoji: '💻' },
+    { id: 'redpacket', name: '红包', emoji: '🧧' },
+    { id: 'express', name: '快递', emoji: '📦' },
+    { id: 'other', name: '其他', emoji: '✨' },
+  ],
+  income: [
+    { id: 'salary', name: '工资', emoji: '💰' },
+    { id: 'bonus', name: '奖金', emoji: '🎊' },
+    { id: 'parttime', name: '兼职', emoji: '💼' },
+    { id: 'invest', name: '理财', emoji: '📈' },
+    { id: 'redpacket_in', name: '红包', emoji: '🧧' },
+    { id: 'refund', name: '退款', emoji: '↩️' },
+    { id: 'sell', name: '卖闲置', emoji: '🛒' },
+    { id: 'other_in', name: '其他', emoji: '✨' },
+  ]
+};
+
+// All available emojis for custom categories
+const EMOJI_POOL = ['🍜','🍰','🍎','🥦','🍞','🥤','☕','🍷','🚗','🚌','✈️','🚲','🛍️','👗','👟','👜','📱','💻','📷','🎧','💡','🏠','💊','💉','🏥','📚','✏️','🎨','🎮','⚽','🏀','🎾','🏊','🐾','🐱','🐶','🎁','🎂','💐','🌸','💄','💅','🧴','🧻','🪒','🧺','💼','📝','🖇️','📎','✂️','🔧','🔨','💡','🔌','🔋','🧰','🧽','🧹','🧺','🛒','🧾','💸','💴','💶','💷','💰','💵','🎊','🧧','🪙','📈','📉','💎','🔮','🎪','🎭','🎬','🎤','🎧','📺','📷','📻','🎹','🎸','🥁','🎺','🎻','🪘','🏛️','🏫','🏥','🏦','🏪','🏬','🏨','🏭','🏗️','⛺','🏠','🏡','🗼','⛲','⛰️','🌋','🏜️','🏝️','🏞️','🏟️','🎡','🎢','🎠','🎪','🎨','🎭','🏺','⚱️','🏺','🗿','🪨','🌳','🌲','🌴','🌵','🌻','🌹','🌺','🌷','🍀','🌿','☘️','🍁','🍂','🍃','🧊','❄️','☃️','⛄','🌨️','☔','☂️','🌧️','⛈️','🌩️','🌪️','🌫️','🌬️','🌀','🌈','🌂','☂️','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','⚡','🔥','💧','🌊','💦','☁️','🌥️','🌦️','🌧️','⛈️','🌩️','⚡','🌪️','🌫️','🌬️','🌀','❄️','☃️','⛄','🌨️','💨','☁️','🌥️','🌤️','☀️','🌞','🌝','🌛','🌜','🌚','🌕','🌖','🌗','🌘','🌓','🌔','🌒','🌑','🌕','🌟','⭐','✨','💫','🌀','☄️','🌠','🌌','🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘','🌙','🌚','🌛','🌜','☀️','🌝','🌞','🪐','🛸','🚀','👻','💀','☠️','👽','👾','🤖','👺','👹','🤖','👽','🛸','🚀','🌌','⭐','🌟','✨','💫','🪄','🔮','🧿','👁️','🧿','🪬','🧿','👁️‍🗨️','👁️','🧠','👂','🦻','👃','🦷','👅','👄','👁️','👀','👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','🖕','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','🦵','🦶','🦷','🦻','🦿','🦾','🫀','🫁','🦵','🦶','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷','👮','🕵️','💂','🥷','👷','🫅','🤴','👸','👳','👲','🧕','🤵','👰','🤰','🫃','🫄','🤱','👼','🎅','🤶','🦸','🦹','🧙','🧚','🧛','🧜','🧝','🧞','🧟','🧌','💆','💇','🚶','🧍','🧎','🏃','💃','🕺','🕴️','👥','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','🫀','🫁','🦵','🦶','👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','🖕','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','🧠','👁️','👀','👄','🦷','👅','👃','🧑','👱','👨','🧔','👩','🧓','👴','👵'];
+
+let state = {
+  books: [],
+  currentBookId: null,
+  records: [],
+  budgets: {},
+  customCategories: { expense: [], income: [] },
+  filterMonth: null,
+  statsType: 'expense',
+  addType: 'expense',
+  addCategoryId: null,
+  newBookIcon: '💝',
+  editingBookId: null,
+  newCatEmoji: '🍜',
+  newCatName: ''
+};
+
+// ===== Storage =====
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      state.books = data.books || [];
+      state.currentBookId = data.currentBookId;
+      state.records = data.records || [];
+      state.budgets = data.budgets || {};
+      state.customCategories = data.customCategories || { expense: [], income: [] };
+    }
+  } catch (e) { console.error(e); }
+
+  // Ensure default book
+  if (!state.books.length) {
+    const defaultBook = { id: genId(), name: '默认账本', icon: '💝', createdAt: Date.now() };
+    state.books.push(defaultBook);
+    state.currentBookId = defaultBook.id;
+  }
+  if (!state.currentBookId || !state.books.find(b => b.id === state.currentBookId)) {
+    state.currentBookId = state.books[0].id;
+  }
+  if (!state.filterMonth) {
+    state.filterMonth = getMonthStr(new Date());
+  }
+  saveState();
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    books: state.books,
+    currentBookId: state.currentBookId,
+    records: state.records,
+    budgets: state.budgets,
+    customCategories: state.customCategories
+  }));
+}
+
+function genId() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+function getMonthStr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function getDayStr(d) { return getMonthStr(d) + '-' + String(d.getDate()).padStart(2, '0'); }
+function parseDayStr(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function formatMoney(n) { return '¥' + Number(n || 0).toFixed(2); }
+function getBook() { return state.books.find(b => b.id === state.currentBookId) || state.books[0]; }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg || '已保存 ✨';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ===== Navigation =====
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + name)?.classList.add('active');
+  if (name === 'records') renderRecords();
+  if (name === 'stats') renderStats();
+  if (name === 'books') renderBookList();
+}
+
+function changeMonth(delta) {
+  const [y, m] = state.filterMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  state.filterMonth = getMonthStr(d);
+  document.getElementById('monthText').textContent = y + '年' + String(m + delta).padStart(2, '0') + '月';
+  // Correct display
+  const nd = new Date(y, m - 1 + delta, 1);
+  document.getElementById('monthText').textContent = nd.getFullYear() + '年' + String(nd.getMonth() + 1).padStart(2, '0') + '月';
+  renderRecords();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+  renderBudget();
+}
+
+// ===== Render: Header =====
+function renderHeader() {
+  const book = getBook();
+  document.getElementById('headerBookName').textContent = book.name;
+  document.getElementById('headerBookIcon').textContent = book.icon;
+}
+
+// ===== Render: Budget =====
+function renderBudget() {
+  const key = state.currentBookId + '_' + state.filterMonth;
+  const budget = state.budgets[key] || 0;
+  const monthRecords = getMonthRecords();
+  const spent = monthRecords.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+  document.getElementById('budgetTotal').textContent = '预算 ' + formatMoney(budget);
+  document.getElementById('budgetSpent').textContent = formatMoney(spent);
+  const fill = document.getElementById('budgetFill');
+  if (budget > 0) {
+    const pct = Math.min(100, (spent / budget) * 100);
+    fill.style.width = pct + '%';
+    fill.classList.remove('warn', 'danger');
+    if (pct >= 100) fill.classList.add('danger');
+    else if (pct >= 80) fill.classList.add('warn');
+  } else {
+    fill.style.width = '0%';
+    fill.classList.remove('warn', 'danger');
+  }
+}
+
+// ===== Render: Records =====
+function getMonthRecords() {
+  return state.records
+    .filter(r => r.bookId === state.currentBookId && r.date.startsWith(state.filterMonth))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+}
+
+function renderSummary() {
+  const monthRecords = getMonthRecords();
+  const income = monthRecords.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+  const expense = monthRecords.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+  document.getElementById('sumIncome').textContent = formatMoney(income);
+  document.getElementById('sumExpense').textContent = formatMoney(expense);
+}
+
+function getAllCategories(type) {
+  return [...DEFAULT_CATEGORIES[type], ...(state.customCategories[type] || [])];
+}
+
+function getCat(type, id) {
+  return getAllCategories(type).find(c => c.id === id) || { name: '未知', emoji: '❓' };
+}
+
+function renderRecords() {
+  renderHeader();
+  renderBudget();
+  renderSummary();
+  const [y,m] = state.filterMonth.split('-').map(Number);
+  document.getElementById('monthText').textContent = y + '年' + String(m).padStart(2,'0') + '月';
+
+  const records = getMonthRecords();
+  const section = document.getElementById('recordsSection');
+
+  if (!records.length) {
+    section.innerHTML = `<div class="empty">
+      <div class="empty-icon">🦉</div>
+      <div class="empty-text">本月还没有记录哦～<br>点击下方 + 记第一笔吧！</div>
+    </div>`;
+    return;
+  }
+
+  // Group by day
+  const groups = {};
+  records.forEach(r => {
+    if (!groups[r.date]) groups[r.date] = [];
+    groups[r.date].push(r);
+  });
+
+  const weekDays = ['周日','周一','周二','周三','周四','周五','周六'];
+  let html = '';
+  Object.keys(groups).sort().reverse().forEach(day => {
+    const list = groups[day];
+    const d = parseDayStr(day);
+    const sumIn = list.filter(r => r.type === 'income').reduce((s,r)=>s+r.amount,0);
+    const sumOut = list.filter(r => r.type === 'expense').reduce((s,r)=>s+r.amount,0);
+    html += `<div class="record-day">
+      <div class="day-header">
+        <span>${parseInt(day.split('-')[2])}日 · ${weekDays[d.getDay()]}</span>
+        <span class="day-sum">
+          ${sumIn > 0 ? '<span class="s-in">收 ' + formatMoney(sumIn) + '</span>' : ''}
+          ${sumOut > 0 ? '<span class="s-out">支 ' + formatMoney(sumOut) + '</span>' : ''}
+        </span>
+      </div>`;
+    list.forEach(r => {
+      const cat = getCat(r.type, r.categoryId);
+      const iconClass = r.type === 'income' ? 'blue' : 'pink';
+      html += `<div class="record-item" oncontextmenu="toggleDel(this,event)" onclick="handleRecordClick(this,'${r.id}')">
+        <div class="cat-icon ${iconClass}">${cat.emoji}</div>
+        <div class="record-info">
+          <div class="record-cat">${cat.name}</div>
+          <div class="record-note">${r.note ? escapeHtml(r.note) : '无备注'}</div>
+        </div>
+        <div class="record-amount ${r.type}">${r.type === 'income' ? '+' : '-'}${formatMoney(r.amount).slice(1)}</div>
+        <div class="record-del" onclick="event.stopPropagation();deleteRecord('${r.id}')">✕</div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  section.innerHTML = html;
+}
+
+function toggleDel(el, e) {
+  e.preventDefault();
+  document.querySelectorAll('.record-item.show-del').forEach(i => { if (i !== el) i.classList.remove('show-del'); });
+  el.classList.toggle('show-del');
+}
+function handleRecordClick(el, id) {
+  if (el.classList.contains('show-del')) { el.classList.remove('show-del'); return; }
+  // long press behavior fallback: on mobile use context menu
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ===== Render: Stats =====
+function switchStatsType(type) {
+  state.statsType = type;
+  document.getElementById('typeBtnExpense').classList.toggle('active', type === 'expense');
+  document.getElementById('typeBtnIncome').classList.toggle('active', type === 'income');
+  renderStats();
+}
+
+function renderStats() {
+  const records = getMonthRecords().filter(r => r.type === state.statsType);
+  const total = records.reduce((s, r) => s + r.amount, 0);
+  const isExp = state.statsType === 'expense';
+
+  document.getElementById('pieCenterLabel').textContent = isExp ? '总支出' : '总收入';
+  document.getElementById('pieCenterAmount').textContent = formatMoney(total);
+  document.getElementById('rankTitle').textContent = '📊 ' + (isExp ? '支出' : '收入') + '分类排行';
+
+  // Aggregate by category
+  const agg = {};
+  records.forEach(r => {
+    if (!agg[r.categoryId]) agg[r.categoryId] = 0;
+    agg[r.categoryId] += r.amount;
+  });
+  const arr = Object.entries(agg).map(([cid, amt]) => ({
+    cat: getCat(state.statsType, cid),
+    amount: amt
+  })).sort((a, b) => b.amount - a.amount);
+
+  // Colors for pie
+  const palette = isExp
+    ? ['#f7b4cc','#fdd7e4','#e889aa','#f9a8c2','#fbc5d8','#ffd3e4','#f29fbd','#fce0ea','#f59cb9','#ffc0d4','#f8a9c5','#f08aac','#fbd1e0','#f6aecb','#f9c3d7']
+    : ['#8fc8e6','#cce7f5','#5ba8d1','#a8d6ec','#bfe1f2','#7cb9da','#9dd0e8','#d3eaf7','#6aadd3','#b7dcef','#86c1dd','#a3d4e8','#c5e4f3','#7cb6d6','#bbe2f1'];
+
+  // Draw pie
+  const canvas = document.getElementById('pieCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const cx = canvas.width / 2, cy = canvas.height / 2, r = 92, ir = 58;
+
+  if (!arr.length || total === 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#eee';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, ir, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  } else {
+    let start = -Math.PI / 2;
+    arr.forEach((item, i) => {
+      const angle = (item.amount / total) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, start, start + angle);
+      ctx.closePath();
+      ctx.fillStyle = palette[i % palette.length];
+      ctx.fill();
+      start += angle;
+    });
+    // Inner white circle (donut)
+    ctx.beginPath();
+    ctx.arc(cx, cy, ir, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  }
+
+  // Rank list
+  const rankEl = document.getElementById('rankList');
+  if (!arr.length) {
+    rankEl.innerHTML = `<div class="empty"><div class="empty-icon" style="font-size:36px;">✨</div>
+      <div class="empty-text">本月还没有${isExp ? '支出' : '收入'}记录哦～</div></div>`;
+    return;
+  }
+  let html = '';
+  arr.forEach((item, i) => {
+    const pct = (item.amount / total * 100).toFixed(1);
+    const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+    const catClass = isExp ? 'pink' : 'blue';
+    html += `<div class="rank-item">
+      <div class="rank-num ${topClass}">${i+1}</div>
+      <div class="rank-cat-icon cat-icon ${catClass}">${item.cat.emoji}</div>
+      <div class="rank-info">
+        <div class="rank-cat">${item.cat.name}</div>
+        <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${palette[i % palette.length]}"></div></div>
+        <div class="rank-percent">占比 ${pct}%</div>
+      </div>
+      <div class="rank-amount" style="color:${isExp ? 'var(--pink-dark)' : 'var(--blue-dark)'}">${formatMoney(item.amount)}</div>
+    </div>`;
+  });
+  rankEl.innerHTML = html;
+}
+
+// ===== Render: Books Page =====
+function renderBookList() {
+  const el = document.getElementById('bookList');
+  let html = '';
+  state.books.forEach(book => {
+    const recs = state.records.filter(r => r.bookId === book.id);
+    const isActive = book.id === state.currentBookId;
+    html += `<div class="book-list-item ${isActive ? 'active' : ''}" onclick="selectBook('${book.id}')">
+      <div class="book-list-icon">${book.icon}</div>
+      <div class="book-list-info">
+        <div class="book-list-name">${escapeHtml(book.name)}</div>
+        <div class="book-list-desc">共 ${recs.length} 条记录</div>
+      </div>
+      <div class="book-list-actions">
+        ${state.books.length > 1 ? `<button class="book-del-btn" onclick="event.stopPropagation();deleteBook('${book.id}')">✕</button>` : ''}
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ===== Add Record Modal =====
+function openAddModal() {
+  state.addType = 'expense';
+  state.addCategoryId = null;
+  document.getElementById('addAmount').value = '';
+  document.getElementById('addNote').value = '';
+  document.getElementById('addDate').value = getDayStr(new Date());
+  setAddType('expense');
+  openModal('addModal');
+  setTimeout(() => document.getElementById('addAmount').focus(), 300);
+}
+
+function setAddType(type) {
+  state.addType = type;
+  state.addCategoryId = null;
+  document.getElementById('addTypeExpense').classList.toggle('active', type === 'expense');
+  document.getElementById('addTypeIncome').classList.toggle('active', type === 'income');
+  const grid = document.getElementById('catGrid');
+  const cats = getAllCategories(type);
+  let html = '';
+  cats.forEach(c => {
+    const delBtn = c.custom ? `<div style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(255,120,140,0.7);color:#fff;font-size:10px;display:none;align-items:center;justify-content:center;cursor:pointer;" onclick="event.stopPropagation();deleteCustomCat('${c.id}')">✕</div>` : '';
+    html += `<div class="cat-item ${type}" data-cid="${c.id}" style="position:relative;" onclick="selectCat(this)">
+      <span class="emoji">${c.emoji}</span>
+      <span class="name">${c.name}</span>
+      ${delBtn}
+    </div>`;
+  });
+  html += `<div class="cat-item ${type}" style="background:rgba(255,255,255,0.4);border:1.5px dashed ${type==='expense'?'var(--pink-deep)':'var(--blue-deep)'};cursor:pointer;" onclick="openCustomCatModal()">
+    <span class="emoji" style="opacity:0.7;">➕</span>
+    <span class="name">自定义</span>
+  </div>`;
+  grid.innerHTML = html;
+}
+
+function selectCat(el) {
+  document.querySelectorAll('#catGrid .cat-item').forEach(i => {
+    i.classList.remove('active');
+    const del = i.querySelector('div[style*="display:none"]');
+    if (del) del.style.display = 'none';
+  });
+  el.classList.add('active');
+  state.addCategoryId = el.dataset.cid;
+  const cat = getAllCategories(state.addType).find(c => c.id === state.addCategoryId);
+  if (cat && cat.custom) {
+    const del = el.querySelector('div[style*="display:none"]');
+    if (del) del.style.display = 'flex';
+  }
+}
+
+function saveRecord() {
+  const amount = parseFloat(document.getElementById('addAmount').value);
+  const date = document.getElementById('addDate').value;
+  const note = document.getElementById('addNote').value.trim();
+  if (!amount || amount <= 0) { showToast('请输入金额 💕'); return; }
+  if (!state.addCategoryId) { showToast('请选择分类 ✨'); return; }
+  if (!date) { showToast('请选择日期 🗓️'); return; }
+
+  state.records.push({
+    id: genId(),
+    bookId: state.currentBookId,
+    type: state.addType,
+    categoryId: state.addCategoryId,
+    amount: Math.round(amount * 100) / 100,
+    date, note,
+    createdAt: Date.now()
+  });
+  saveState();
+  closeModal('addModal');
+  showToast('记账成功 🎀');
+  renderRecords();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+}
+
+function deleteRecord(id) {
+  if (!confirm('确定删除这条记录吗？🗡️')) return;
+  state.records = state.records.filter(r => r.id !== id);
+  saveState();
+  showToast('已删除 ✨');
+  renderRecords();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+}
+
+// ===== Book Modal =====
+function openBookModal() {
+  const el = document.getElementById('bookModalList');
+  let html = '';
+  state.books.forEach(book => {
+    const isActive = book.id === state.currentBookId;
+    html += `<div class="book-list-item ${isActive ? 'active' : ''}" onclick="selectBook('${book.id}');closeModal('bookModal');">
+      <div class="book-list-icon">${book.icon}</div>
+      <div class="book-list-info">
+        <div class="book-list-name">${escapeHtml(book.name)}</div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+  openModal('bookModal');
+}
+
+function selectBook(id) {
+  state.currentBookId = id;
+  saveState();
+  renderHeader();
+  renderRecords();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+  if (document.getElementById('page-books').classList.contains('active')) renderBookList();
+}
+
+function openNewBookModal() {
+  document.getElementById('newBookName').value = '';
+  document.getElementById('newBookBudget').value = '';
+  state.newBookIcon = '💝';
+  document.querySelectorAll('#bookIconGrid .cat-item').forEach(i => {
+    i.classList.toggle('active', i.dataset.icon === '💝');
+  });
+  document.querySelectorAll('#bookIconGrid .cat-item.expense, #bookIconGrid .cat-item.income')
+    .forEach(i => i.classList.remove('expense', 'income'));
+  openModal('newBookModal');
+  setTimeout(() => document.getElementById('newBookName').focus(), 300);
+}
+
+function selectBookIcon(el) {
+  document.querySelectorAll('#bookIconGrid .cat-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  state.newBookIcon = el.dataset.icon;
+}
+
+function createBook() {
+  const name = document.getElementById('newBookName').value.trim();
+  const budget = parseFloat(document.getElementById('newBookBudget').value) || 0;
+  if (!name) { showToast('请输入账本名称 💝'); return; }
+  const book = { id: genId(), name, icon: state.newBookIcon, createdAt: Date.now() };
+  state.books.push(book);
+  state.currentBookId = book.id;
+  if (budget > 0) {
+    const key = book.id + '_' + getMonthStr(new Date());
+    state.budgets[key] = budget;
+  }
+  saveState();
+  closeModal('newBookModal');
+  showToast('账本创建成功 🎉');
+  renderHeader();
+  renderRecords();
+}
+
+function deleteBook(id) {
+  if (!confirm('确定删除这个账本？里面的所有记录都会消失哦 💔')) return;
+  state.books = state.books.filter(b => b.id !== id);
+  state.records = state.records.filter(r => r.bookId !== id);
+  if (state.currentBookId === id) state.currentBookId = state.books[0].id;
+  saveState();
+  renderHeader();
+  renderBookList();
+  renderRecords();
+}
+
+// ===== Custom Category =====
+function openCustomCatModal() {
+  state.newCatEmoji = EMOJI_POOL[0];
+  state.newCatName = '';
+  document.getElementById('newCatName').value = '';
+  const grid = document.getElementById('emojiGrid');
+  let html = '';
+  EMOJI_POOL.forEach((e, i) => {
+    html += `<div class="cat-item ${i===0?'expense':''}" data-emoji="${e}" onclick="selectCatEmoji(this)">
+      <span class="emoji">${e}</span>
+    </div>`;
+  });
+  grid.innerHTML = html;
+  openModal('customCatModal');
+}
+
+function selectCatEmoji(el) {
+  document.querySelectorAll('#emojiGrid .cat-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  state.newCatEmoji = el.dataset.emoji;
+}
+
+function saveCustomCat() {
+  const name = document.getElementById('newCatName').value.trim();
+  if (!name) { showToast('请输入分类名称 ✨'); return; }
+  const cat = { id: 'custom_' + genId(), name, emoji: state.newCatEmoji, custom: true };
+  if (!state.customCategories[state.addType]) state.customCategories[state.addType] = [];
+  state.customCategories[state.addType].push(cat);
+  saveState();
+  closeModal('customCatModal');
+  showToast('分类创建成功 🎨');
+  setAddType(state.addType);
+  state.addCategoryId = cat.id;
+  setTimeout(() => {
+    const el = document.querySelector(`#catGrid [data-cid="${cat.id}"]`);
+    if (el) { el.classList.add('active'); }
+  }, 50);
+}
+
+function deleteCustomCat(cid) {
+  if (!confirm('删除这个自定义分类？相关记录会保留哦～')) return;
+  ['expense','income'].forEach(t => {
+    state.customCategories[t] = (state.customCategories[t] || []).filter(c => c.id !== cid);
+  });
+  saveState();
+  setAddType(state.addType);
+  showToast('分类已删除 ✨');
+}
+
+// ===== Budget Modal =====
+function openBudgetModal() {
+  const key = state.currentBookId + '_' + state.filterMonth;
+  document.getElementById('budgetInput').value = state.budgets[key] || '';
+  openModal('budgetModal');
+  setTimeout(() => document.getElementById('budgetInput').focus(), 300);
+}
+function saveBudget() {
+  const budget = parseFloat(document.getElementById('budgetInput').value) || 0;
+  const key = state.currentBookId + '_' + state.filterMonth;
+  if (budget > 0) state.budgets[key] = budget;
+  else delete state.budgets[key];
+  saveState();
+  closeModal('budgetModal');
+  showToast('预算已保存 🦉');
+  renderBudget();
+}
+
+// ===== Modal Utils =====
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// Close modal on mask click
+document.querySelectorAll('.modal-mask').forEach(mask => {
+  mask.addEventListener('click', e => { if (e.target === mask) mask.classList.remove('show'); });
+});
+
+// ===== Init =====
+loadState();
+renderHeader();
+renderRecords();
+</script>
+</body>
+</html>
