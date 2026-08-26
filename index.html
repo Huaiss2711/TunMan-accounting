@@ -156,7 +156,82 @@
     font-size: 12px;
     color: var(--text-light);
   }
-  .budget-amount .spent { color: var(--pink-dark); font-weight: 600; }
+  .budget-amount .spent { color: var(--blue-dark); font-weight: 600; }
+
+  /* Budget tabs */
+  .budget-tabs {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+  }
+  .budget-tab {
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.5);
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .budget-tab.active {
+    background: rgba(255,255,255,0.9);
+    color: var(--blue-dark);
+    border-color: var(--blue-deep);
+    box-shadow: 0 2px 6px rgba(140,180,220,0.2);
+  }
+
+  /* Balance row */
+  .balance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    margin-top: 10px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(204,231,245,0.3), rgba(253,215,228,0.3));
+  }
+  .balance-label { font-size: 13px; color: var(--text-light); }
+  .balance-amount { font-size: 18px; font-weight: 700; }
+  .balance-amount.positive { color: var(--blue-dark); }
+  .balance-amount.negative { color: var(--pink-dark); }
+
+  /* Budget remaining row */
+  .budget-remaining {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 12px;
+  }
+  .budget-remaining .remaining-label { color: var(--text-light); }
+  .budget-remaining .remaining-amount { font-weight: 700; }
+  .budget-remaining .remaining-amount.positive { color: var(--blue-dark); }
+  .budget-remaining .remaining-amount.negative { color: var(--pink-dark); }
+
+  /* Budget type grid in modal */
+  .budget-type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .budget-type-opt {
+    padding: 10px 8px;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.6);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-light);
+  }
+  .budget-type-opt.active {
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
+    border-color: var(--blue-deep);
+  }
 
   .summary-row {
     display: grid;
@@ -167,16 +242,16 @@
     padding: 14px;
     border-radius: 14px;
   }
-  .summary-item.income { background: linear-gradient(135deg, rgba(204,231,245,0.7), rgba(255,255,255,0.9)); }
-  .summary-item.expense { background: linear-gradient(135deg, rgba(253,215,228,0.7), rgba(255,255,255,0.9)); }
+  .summary-item.expense { background: linear-gradient(135deg, rgba(204,231,245,0.7), rgba(255,255,255,0.9)); }
+  .summary-item.income { background: linear-gradient(135deg, rgba(253,215,228,0.7), rgba(255,255,255,0.9)); }
   .summary-title { font-size: 12px; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
   .summary-amount {
     font-size: 22px;
     font-weight: 700;
     margin-top: 6px;
   }
-  .summary-item.income .summary-amount { color: var(--blue-dark); }
-  .summary-item.expense .summary-amount { color: var(--pink-dark); }
+  .summary-item.expense .summary-amount { color: var(--blue-dark); }
+  .summary-item.income .summary-amount { color: var(--pink-dark); }
 
   /* ===== Month Filter ===== */
   .month-filter {
@@ -265,8 +340,8 @@
   }
   .day-sum { display: flex; gap: 12px; }
   .day-sum span { font-weight: 600; }
-  .day-sum .s-in { color: var(--blue-dark); }
-  .day-sum .s-out { color: var(--pink-dark); }
+  .day-sum .s-in { color: var(--pink-dark); }
+  .day-sum .s-out { color: var(--blue-dark); }
   .record-item {
     display: flex;
     align-items: center;
@@ -299,8 +374,8 @@
     font-weight: 700;
     text-align: right;
   }
-  .record-amount.in { color: var(--blue-dark); }
-  .record-amount.out { color: var(--pink-dark); }
+  .record-amount.in { color: var(--pink-dark); }
+  .record-amount.out { color: var(--blue-dark); }
   .record-del {
     position: absolute;
     top: 4px; right: 4px;
@@ -341,8 +416,8 @@
     color: var(--text-light);
     transition: all 0.2s;
   }
-  .type-btn.active.expense { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); color: #fff; }
-  .type-btn.active.income { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; }
+  .type-btn.active.expense { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; }
+  .type-btn.active.income { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); color: #fff; }
 
   .pie-wrap {
     display: flex;
@@ -542,8 +617,8 @@
     border: 2px solid transparent;
     transition: all 0.2s;
   }
-  .type-switch .opt.expense.active { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); border-color: var(--pink-deep); color: #fff; }
-  .type-switch .opt.income.active { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); border-color: var(--blue-deep); color: #fff; }
+  .type-switch .opt.expense.active { background: linear-gradient(135deg, var(--blue), var(--blue-deep)); border-color: var(--blue-deep); color: #fff; }
+  .type-switch .opt.income.active { background: linear-gradient(135deg, var(--pink), var(--pink-deep)); border-color: var(--pink-deep); color: #fff; }
 
   .cat-grid {
     display: grid;
@@ -568,8 +643,8 @@
     background: rgba(255,255,255,0.95);
     box-shadow: 0 2px 10px rgba(180, 140, 170, 0.2);
   }
-  .cat-item.expense.active { border-color: var(--pink-deep); }
-  .cat-item.income.active { border-color: var(--blue-deep); }
+  .cat-item.expense.active { border-color: var(--blue-deep); }
+  .cat-item.income.active { border-color: var(--pink-deep); }
   .cat-item .emoji { font-size: 24px; }
   .cat-item .name { font-size: 10px; color: var(--text-light); }
   .cat-item.active .name { color: var(--text); font-weight: 600; }
@@ -729,25 +804,39 @@
     <div class="summary">
       <div class="card budget-card" id="budgetCard">
         <div class="budget-row">
-          <span class="budget-label">🦉 本月预算</span>
+          <div class="budget-tabs">
+            <span class="budget-tab active" data-type="month" onclick="switchBudgetType('month')">月</span>
+            <span class="budget-tab" data-type="week" onclick="switchBudgetType('week')">周</span>
+            <span class="budget-tab" data-type="quarter" onclick="switchBudgetType('quarter')">季</span>
+            <span class="budget-tab" data-type="year" onclick="switchBudgetType('year')">年</span>
+            <span class="budget-tab" data-type="total" onclick="switchBudgetType('total')">总</span>
+          </div>
           <span class="budget-edit" onclick="openBudgetModal()">设置</span>
         </div>
         <div class="budget-bar"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
         <div class="budget-amount">
-          <span>已支出：<span class="spent" id="budgetSpent">¥0.00</span></span>
+          <span>已支：<span class="spent" id="budgetSpent">¥0.00</span></span>
           <span id="budgetTotal">预算 ¥0.00</span>
+        </div>
+        <div class="budget-remaining">
+          <span class="remaining-label" id="budgetRemainingLabel">剩余</span>
+          <span class="remaining-amount" id="budgetRemaining">¥0.00</span>
         </div>
       </div>
       <div class="card">
         <div class="summary-row">
-          <div class="summary-item income">
-            <div class="summary-title">🎻 收入</div>
-            <div class="summary-amount" id="sumIncome">¥0.00</div>
-          </div>
           <div class="summary-item expense">
-            <div class="summary-title">🗡️ 支出</div>
+            <div class="summary-title">🎻 支出</div>
             <div class="summary-amount" id="sumExpense">¥0.00</div>
           </div>
+          <div class="summary-item income">
+            <div class="summary-title">🗡️ 收入</div>
+            <div class="summary-amount" id="sumIncome">¥0.00</div>
+          </div>
+        </div>
+        <div class="balance-row">
+          <span class="balance-label">✨ 本月结余</span>
+          <span class="balance-amount" id="monthBalance">¥0.00</span>
         </div>
       </div>
     </div>
@@ -772,8 +861,8 @@
     <div class="summary">
       <div class="card">
         <div class="stats-type-switch">
-          <div class="type-btn expense active" id="typeBtnExpense" onclick="switchStatsType('expense')">🗡️ 支出</div>
-          <div class="type-btn income" id="typeBtnIncome" onclick="switchStatsType('income')">🎻 收入</div>
+          <div class="type-btn expense active" id="typeBtnExpense" onclick="switchStatsType('expense')">🎻 支出</div>
+          <div class="type-btn income" id="typeBtnIncome" onclick="switchStatsType('income')">🗡️ 收入</div>
         </div>
         <div class="pie-wrap">
           <div class="pie-chart">
@@ -833,8 +922,8 @@
     </div>
 
     <div class="type-switch">
-      <div class="opt expense active" id="addTypeExpense" onclick="setAddType('expense')">🗡️ 支出</div>
-      <div class="opt income" id="addTypeIncome" onclick="setAddType('income')">🎻 收入</div>
+      <div class="opt expense active" id="addTypeExpense" onclick="setAddType('expense')">🎻 支出</div>
+      <div class="opt income" id="addTypeIncome" onclick="setAddType('income')">🗡️ 收入</div>
     </div>
 
     <div class="form-row">
@@ -942,11 +1031,21 @@
 <div class="modal-mask" id="budgetModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">🦉 设置本月预算</div>
+      <div class="modal-title">🦉 设置预算</div>
       <div class="modal-close" onclick="closeModal('budgetModal')">✕</div>
     </div>
     <div class="form-row">
-      <label class="form-label">本月预算金额</label>
+      <label class="form-label">预算类型</label>
+      <div class="budget-type-grid">
+        <div class="budget-type-opt active" data-type="month" onclick="selectBudgetType('month')">月预算</div>
+        <div class="budget-type-opt" data-type="week" onclick="selectBudgetType('week')">周预算</div>
+        <div class="budget-type-opt" data-type="quarter" onclick="selectBudgetType('quarter')">季度预算</div>
+        <div class="budget-type-opt" data-type="year" onclick="selectBudgetType('year')">年度预算</div>
+        <div class="budget-type-opt" data-type="total" onclick="selectBudgetType('total')">总预算</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label" id="budgetPeriodLabel">本月预算金额</label>
       <div class="amount-input-wrap">
         <span class="amount-prefix">¥</span>
         <input type="number" id="budgetInput" class="amount-input" placeholder="0.00" step="0.01" inputmode="decimal">
@@ -1021,7 +1120,9 @@ let state = {
   newBookIcon: '💝',
   editingBookId: null,
   newCatEmoji: '🍜',
-  newCatName: ''
+  newCatName: '',
+  currentBudgetType: 'month',
+  budgetModalType: 'month'
 };
 
 // ===== Storage =====
@@ -1033,8 +1134,25 @@ function loadState() {
       state.books = data.books || [];
       state.currentBookId = data.currentBookId;
       state.records = data.records || [];
-      state.budgets = data.budgets || {};
       state.customCategories = data.customCategories || { expense: [], income: [] };
+      // Migrate old budget keys (bookId_YYYY-MM → bookId|month|YYYY-MM)
+      const oldBudgets = data.budgets || {};
+      state.budgets = {};
+      Object.keys(oldBudgets).forEach(k => {
+        if (k.includes('|')) {
+          state.budgets[k] = oldBudgets[k];
+        } else {
+          // old format: bookId_YYYY-MM
+          const lastUnder = k.lastIndexOf('_');
+          if (lastUnder > 0) {
+            const bookId = k.substring(0, lastUnder);
+            const period = k.substring(lastUnder + 1);
+            state.budgets[bookId + '|month|' + period] = oldBudgets[k];
+          } else {
+            state.budgets[k] = oldBudgets[k];
+          }
+        }
+      });
     }
   } catch (e) { console.error(e); }
 
@@ -1108,14 +1226,103 @@ function renderHeader() {
   document.getElementById('headerBookIcon').textContent = book.icon;
 }
 
+// ===== Budget System =====
+function getBudgetPeriod(type, date) {
+  const d = date || new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  switch(type) {
+    case 'month': return getMonthStr(d);
+    case 'week': {
+      const dt = new Date(d);
+      dt.setHours(0,0,0,0);
+      dt.setDate(dt.getDate() + 3 - (dt.getDay() + 6) % 7);
+      const week1 = new Date(dt.getFullYear(), 0, 4);
+      const weekNum = 1 + Math.round(((dt - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+      return dt.getFullYear() + '-W' + String(weekNum).padStart(2,'0');
+    }
+    case 'quarter': {
+      const q = Math.ceil(m / 3);
+      return y + '-Q' + q;
+    }
+    case 'year': return String(y);
+    case 'total': return 'total';
+    default: return getMonthStr(d);
+  }
+}
+
+function getBudgetKey(bookId, type) {
+  return bookId + '|' + type + '|' + getBudgetPeriod(type, new Date());
+}
+
+function getBudgetAmount(bookId, type) {
+  const key = getBudgetKey(bookId, type);
+  return state.budgets[key] || 0;
+}
+
+function getBudgetSpent(bookId, type) {
+  const records = state.records.filter(r => r.bookId === bookId && r.type === 'expense');
+  const now = new Date();
+  switch(type) {
+    case 'month': {
+      const prefix = getMonthStr(now);
+      return records.filter(r => r.date.startsWith(prefix)).reduce((s,r) => s+r.amount, 0);
+    }
+    case 'week': {
+      const day = (now.getDay() + 6) % 7;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - day);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const start = getDayStr(monday);
+      const end = getDayStr(sunday);
+      return records.filter(r => r.date >= start && r.date <= end).reduce((s,r) => s+r.amount, 0);
+    }
+    case 'quarter': {
+      const q = Math.floor(now.getMonth() / 3);
+      const startMonth = q * 3 + 1;
+      const endMonth = startMonth + 2;
+      const startYM = now.getFullYear() + '-' + String(startMonth).padStart(2,'0');
+      const endYM = now.getFullYear() + '-' + String(endMonth).padStart(2,'0');
+      return records.filter(r => {
+        const ym = r.date.substring(0, 7);
+        return ym >= startYM && ym <= endYM;
+      }).reduce((s,r) => s+r.amount, 0);
+    }
+    case 'year':
+      return records.filter(r => r.date.startsWith(String(now.getFullYear()))).reduce((s,r) => s+r.amount, 0);
+    case 'total':
+      return records.reduce((s,r) => s+r.amount, 0);
+    default: return 0;
+  }
+}
+
+function getBudgetTypeLabel(type) {
+  return { month:'本月', week:'本周', quarter:'本季度', year:'本年度', total:'总体' }[type] || '本月';
+}
+
+function switchBudgetType(type) {
+  state.currentBudgetType = type;
+  document.querySelectorAll('.budget-tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
+  renderBudget();
+}
+
 // ===== Render: Budget =====
 function renderBudget() {
-  const key = state.currentBookId + '_' + state.filterMonth;
-  const budget = state.budgets[key] || 0;
-  const monthRecords = getMonthRecords();
-  const spent = monthRecords.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
-  document.getElementById('budgetTotal').textContent = '预算 ' + formatMoney(budget);
+  const type = state.currentBudgetType;
+  const budget = getBudgetAmount(state.currentBookId, type);
+  const spent = getBudgetSpent(state.currentBookId, type);
+  const remaining = budget - spent;
+  const label = getBudgetTypeLabel(type);
+
+  document.getElementById('budgetTotal').textContent = label + '预算 ' + formatMoney(budget);
   document.getElementById('budgetSpent').textContent = formatMoney(spent);
+  document.getElementById('budgetRemainingLabel').textContent = budget > 0 ? '剩余' : '未设预算';
+  const remEl = document.getElementById('budgetRemaining');
+  remEl.textContent = budget > 0 ? formatMoney(remaining) : '—';
+  remEl.classList.toggle('positive', budget > 0 && remaining >= 0);
+  remEl.classList.toggle('negative', budget > 0 && remaining < 0);
+
   const fill = document.getElementById('budgetFill');
   if (budget > 0) {
     const pct = Math.min(100, (spent / budget) * 100);
@@ -1140,8 +1347,13 @@ function renderSummary() {
   const monthRecords = getMonthRecords();
   const income = monthRecords.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
   const expense = monthRecords.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+  const balance = income - expense;
   document.getElementById('sumIncome').textContent = formatMoney(income);
   document.getElementById('sumExpense').textContent = formatMoney(expense);
+  const balEl = document.getElementById('monthBalance');
+  balEl.textContent = formatMoney(balance);
+  balEl.classList.toggle('positive', balance >= 0);
+  balEl.classList.toggle('negative', balance < 0);
 }
 
 function getAllCategories(type) {
@@ -1194,7 +1406,7 @@ function renderRecords() {
       </div>`;
     list.forEach(r => {
       const cat = getCat(r.type, r.categoryId);
-      const iconClass = r.type === 'income' ? 'blue' : 'pink';
+      const iconClass = r.type === 'expense' ? 'blue' : 'pink';
       html += `<div class="record-item" oncontextmenu="toggleDel(this,event)" onclick="handleRecordClick(this,'${r.id}')">
         <div class="cat-icon ${iconClass}">${cat.emoji}</div>
         <div class="record-info">
@@ -1254,8 +1466,8 @@ function renderStats() {
 
   // Colors for pie
   const palette = isExp
-    ? ['#f7b4cc','#fdd7e4','#e889aa','#f9a8c2','#fbc5d8','#ffd3e4','#f29fbd','#fce0ea','#f59cb9','#ffc0d4','#f8a9c5','#f08aac','#fbd1e0','#f6aecb','#f9c3d7']
-    : ['#8fc8e6','#cce7f5','#5ba8d1','#a8d6ec','#bfe1f2','#7cb9da','#9dd0e8','#d3eaf7','#6aadd3','#b7dcef','#86c1dd','#a3d4e8','#c5e4f3','#7cb6d6','#bbe2f1'];
+    ? ['#8fc8e6','#cce7f5','#5ba8d1','#a8d6ec','#bfe1f2','#7cb9da','#9dd0e8','#d3eaf7','#6aadd3','#b7dcef','#86c1dd','#a3d4e8','#c5e4f3','#7cb6d6','#bbe2f1']
+    : ['#f7b4cc','#fdd7e4','#e889aa','#f9a8c2','#fbc5d8','#ffd3e4','#f29fbd','#fce0ea','#f59cb9','#ffc0d4','#f8a9c5','#f08aac','#fbd1e0','#f6aecb','#f9c3d7'];
 
   // Draw pie
   const canvas = document.getElementById('pieCanvas');
@@ -1302,7 +1514,7 @@ function renderStats() {
   arr.forEach((item, i) => {
     const pct = (item.amount / total * 100).toFixed(1);
     const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-    const catClass = isExp ? 'pink' : 'blue';
+    const catClass = isExp ? 'blue' : 'pink';
     html += `<div class="rank-item">
       <div class="rank-num ${topClass}">${i+1}</div>
       <div class="rank-cat-icon cat-icon ${catClass}">${item.cat.emoji}</div>
@@ -1311,7 +1523,7 @@ function renderStats() {
         <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${palette[i % palette.length]}"></div></div>
         <div class="rank-percent">占比 ${pct}%</div>
       </div>
-      <div class="rank-amount" style="color:${isExp ? 'var(--pink-dark)' : 'var(--blue-dark)'}">${formatMoney(item.amount)}</div>
+      <div class="rank-amount" style="color:${isExp ? 'var(--blue-dark)' : 'var(--pink-dark)'}">${formatMoney(item.amount)}</div>
     </div>`;
   });
   rankEl.innerHTML = html;
@@ -1366,7 +1578,7 @@ function setAddType(type) {
       ${delBtn}
     </div>`;
   });
-  html += `<div class="cat-item ${type}" style="background:rgba(255,255,255,0.4);border:1.5px dashed ${type==='expense'?'var(--pink-deep)':'var(--blue-deep)'};cursor:pointer;" onclick="openCustomCatModal()">
+  html += `<div class="cat-item ${type}" style="background:rgba(255,255,255,0.4);border:1.5px dashed ${type==='expense'?'var(--blue-deep)':'var(--pink-deep)'};cursor:pointer;" onclick="openCustomCatModal()">
     <span class="emoji" style="opacity:0.7;">➕</span>
     <span class="name">自定义</span>
   </div>`;
@@ -1474,7 +1686,7 @@ function createBook() {
   state.books.push(book);
   state.currentBookId = book.id;
   if (budget > 0) {
-    const key = book.id + '_' + getMonthStr(new Date());
+    const key = getBudgetKey(book.id, 'month');
     state.budgets[key] = budget;
   }
   saveState();
@@ -1546,18 +1758,37 @@ function deleteCustomCat(cid) {
 
 // ===== Budget Modal =====
 function openBudgetModal() {
-  const key = state.currentBookId + '_' + state.filterMonth;
+  state.budgetModalType = state.currentBudgetType;
+  document.querySelectorAll('.budget-type-opt').forEach(o => o.classList.toggle('active', o.dataset.type === state.budgetModalType));
+  updateBudgetPeriodLabel();
+  const key = getBudgetKey(state.currentBookId, state.budgetModalType);
   document.getElementById('budgetInput').value = state.budgets[key] || '';
   openModal('budgetModal');
   setTimeout(() => document.getElementById('budgetInput').focus(), 300);
 }
+
+function selectBudgetType(type) {
+  state.budgetModalType = type;
+  document.querySelectorAll('.budget-type-opt').forEach(o => o.classList.toggle('active', o.dataset.type === type));
+  updateBudgetPeriodLabel();
+  const key = getBudgetKey(state.currentBookId, type);
+  document.getElementById('budgetInput').value = state.budgets[key] || '';
+}
+
+function updateBudgetPeriodLabel() {
+  const labels = { month:'本月预算金额', week:'本周预算金额', quarter:'本季度预算金额', year:'本年度预算金额', total:'总体预算金额（不限时间）' };
+  document.getElementById('budgetPeriodLabel').textContent = labels[state.budgetModalType] || '预算金额';
+}
+
 function saveBudget() {
   const budget = parseFloat(document.getElementById('budgetInput').value) || 0;
-  const key = state.currentBookId + '_' + state.filterMonth;
+  const key = getBudgetKey(state.currentBookId, state.budgetModalType);
   if (budget > 0) state.budgets[key] = budget;
   else delete state.budgets[key];
   saveState();
   closeModal('budgetModal');
+  state.currentBudgetType = state.budgetModalType;
+  document.querySelectorAll('.budget-tab').forEach(t => t.classList.toggle('active', t.dataset.type === state.currentBudgetType));
   showToast('预算已保存 🦉');
   renderBudget();
 }
