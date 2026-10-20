@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<html lang="zh-CN"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#cce7f5">
@@ -493,6 +492,26 @@
     flex-shrink: 0;
   }
   .rank-percent { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+  .rank-item-wrap { margin-bottom: 8px; }
+  .rank-detail {
+    margin: 0 0 10px 0;
+    padding: 8px 12px 8px 46px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 0 0 12px 12px;
+    margin-top: -6px;
+    animation: fadeIn 0.2s;
+  }
+  .rank-detail-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(200,180,190,0.3);
+    font-size: 12px;
+  }
+  .rank-detail-item:last-child { border-bottom: none; }
+  .rank-detail-date { color: var(--text-light); width: 70px; flex-shrink: 0; }
+  .rank-detail-note { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); margin: 0 8px; }
+  .rank-detail-amount { font-weight: 700; flex-shrink: 0; }
 
   /* ===== Bottom Nav ===== */
   .bottom-nav {
@@ -1122,7 +1141,9 @@ let state = {
   newCatEmoji: '🍜',
   newCatName: '',
   currentBudgetType: 'month',
-  budgetModalType: 'month'
+  bookBudgetTypes: {},
+  budgetModalType: 'month',
+  expandedCatId: null // 统计页展开的分类明细
 };
 
 // ===== Storage =====
@@ -1135,6 +1156,7 @@ function loadState() {
       state.currentBookId = data.currentBookId;
       state.records = data.records || [];
       state.customCategories = data.customCategories || { expense: [], income: [] };
+      state.bookBudgetTypes = data.bookBudgetTypes || {};
       // Migrate old budget keys (bookId_YYYY-MM → bookId|month|YYYY-MM)
       const oldBudgets = data.budgets || {};
       state.budgets = {};
@@ -1177,7 +1199,8 @@ function saveState() {
     currentBookId: state.currentBookId,
     records: state.records,
     budgets: state.budgets,
-    customCategories: state.customCategories
+    customCategories: state.customCategories,
+    bookBudgetTypes: state.bookBudgetTypes
   }));
 }
 
@@ -1301,15 +1324,27 @@ function getBudgetTypeLabel(type) {
   return { month:'本月', week:'本周', quarter:'本季度', year:'本年度', total:'总体' }[type] || '本月';
 }
 
-function switchBudgetType(type) {
+function getCurrentBudgetType() {
+  return state.bookBudgetTypes[state.currentBookId] || state.currentBudgetType || 'month';
+}
+
+function setCurrentBudgetType(type) {
+  state.bookBudgetTypes[state.currentBookId] = type;
   state.currentBudgetType = type;
+}
+
+function switchBudgetType(type) {
+  setCurrentBudgetType(type);
   document.querySelectorAll('.budget-tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
-  renderBudget();
+  renderRecords();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
 }
 
 // ===== Render: Budget =====
 function renderBudget() {
-  const type = state.currentBudgetType;
+  const type = getCurrentBudgetType();
+  // 同步预算 tab 选中状态（切换账本时）
+  document.querySelectorAll('.budget-tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
   const budget = getBudgetAmount(state.currentBookId, type);
   const spent = getBudgetSpent(state.currentBookId, type);
   const remaining = budget - spent;
@@ -1343,10 +1378,68 @@ function getMonthRecords() {
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 }
 
+// 根据当前预算类型返回对应时间范围内的记录
+function getPeriodRecords() {
+  const type = getCurrentBudgetType();
+  const bookRecords = state.records.filter(r => r.bookId === state.currentBookId);
+  const now = new Date();
+  let filtered = bookRecords;
+  switch(type) {
+    case 'month':
+      filtered = bookRecords.filter(r => r.date.startsWith(state.filterMonth));
+      break;
+    case 'week': {
+      const day = (now.getDay() + 6) % 7;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - day);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const start = getDayStr(monday);
+      const end = getDayStr(sunday);
+      filtered = bookRecords.filter(r => r.date >= start && r.date <= end);
+      break;
+    }
+    case 'quarter': {
+      const q = Math.floor(now.getMonth() / 3);
+      const startMonth = q * 3 + 1;
+      const endMonth = startMonth + 2;
+      const startYM = now.getFullYear() + '-' + String(startMonth).padStart(2,'0');
+      const endYM = now.getFullYear() + '-' + String(endMonth).padStart(2,'0');
+      filtered = bookRecords.filter(r => {
+        const ym = r.date.substring(0, 7);
+        return ym >= startYM && ym <= endYM;
+      });
+      break;
+    }
+    case 'year':
+      filtered = bookRecords.filter(r => r.date.startsWith(String(now.getFullYear())));
+      break;
+    case 'total':
+      filtered = bookRecords;
+      break;
+  }
+  return filtered.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+}
+
+function getPeriodTitle() {
+  const type = getCurrentBudgetType();
+  switch(type) {
+    case 'month': {
+      const [y,m] = state.filterMonth.split('-').map(Number);
+      return y + '年' + String(m).padStart(2,'0') + '月';
+    }
+    case 'week': return '本周明细';
+    case 'quarter': return '本季度明细';
+    case 'year': return '本年度明细';
+    case 'total': return '全部明细';
+    default: return '';
+  }
+}
+
 function renderSummary() {
-  const monthRecords = getMonthRecords();
-  const income = monthRecords.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
-  const expense = monthRecords.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+  const records = getPeriodRecords();
+  const income = records.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+  const expense = records.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
   const balance = income - expense;
   document.getElementById('sumIncome').textContent = formatMoney(income);
   document.getElementById('sumExpense').textContent = formatMoney(expense);
@@ -1368,16 +1461,20 @@ function renderRecords() {
   renderHeader();
   renderBudget();
   renderSummary();
-  const [y,m] = state.filterMonth.split('-').map(Number);
-  document.getElementById('monthText').textContent = y + '年' + String(m).padStart(2,'0') + '月';
+  document.getElementById('monthText').textContent = getPeriodTitle();
 
-  const records = getMonthRecords();
+  // 月份切换按钮仅在月预算类型时可点
+  const monthBtns = document.querySelectorAll('.month-btn');
+  const type = getCurrentBudgetType();
+  monthBtns.forEach(btn => btn.style.visibility = (type === 'month') ? 'visible' : 'hidden');
+
+  const records = getPeriodRecords();
   const section = document.getElementById('recordsSection');
 
   if (!records.length) {
     section.innerHTML = `<div class="empty">
       <div class="empty-icon">🦉</div>
-      <div class="empty-text">本月还没有记录哦～<br>点击下方 + 记第一笔吧！</div>
+      <div class="empty-text">${getBudgetTypeLabel(type)}还没有记录哦～<br>点击下方 + 记第一笔吧！</div>
     </div>`;
     return;
   }
@@ -1439,13 +1536,14 @@ function escapeHtml(s) {
 // ===== Render: Stats =====
 function switchStatsType(type) {
   state.statsType = type;
+  state.expandedCatId = null;
   document.getElementById('typeBtnExpense').classList.toggle('active', type === 'expense');
   document.getElementById('typeBtnIncome').classList.toggle('active', type === 'income');
   renderStats();
 }
 
 function renderStats() {
-  const records = getMonthRecords().filter(r => r.type === state.statsType);
+  const records = getPeriodRecords().filter(r => r.type === state.statsType);
   const total = records.reduce((s, r) => s + r.amount, 0);
   const isExp = state.statsType === 'expense';
 
@@ -1507,7 +1605,7 @@ function renderStats() {
   const rankEl = document.getElementById('rankList');
   if (!arr.length) {
     rankEl.innerHTML = `<div class="empty"><div class="empty-icon" style="font-size:36px;">✨</div>
-      <div class="empty-text">本月还没有${isExp ? '支出' : '收入'}记录哦～</div></div>`;
+      <div class="empty-text">${getBudgetTypeLabel(getCurrentBudgetType())}还没有${isExp ? '支出' : '收入'}记录哦～</div></div>`;
     return;
   }
   let html = '';
@@ -1515,18 +1613,41 @@ function renderStats() {
     const pct = (item.amount / total * 100).toFixed(1);
     const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
     const catClass = isExp ? 'blue' : 'pink';
-    html += `<div class="rank-item">
-      <div class="rank-num ${topClass}">${i+1}</div>
-      <div class="rank-cat-icon cat-icon ${catClass}">${item.cat.emoji}</div>
-      <div class="rank-info">
-        <div class="rank-cat">${item.cat.name}</div>
-        <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${palette[i % palette.length]}"></div></div>
-        <div class="rank-percent">占比 ${pct}%</div>
-      </div>
-      <div class="rank-amount" style="color:${isExp ? 'var(--blue-dark)' : 'var(--pink-dark)'}">${formatMoney(item.amount)}</div>
-    </div>`;
+    const isExpanded = state.expandedCatId === item.cat.id;
+    // 该分类的明细记录
+    const detailRecords = records.filter(r => r.categoryId === item.cat.id);
+    const weekDays = ['周日','周一','周二','周三','周四','周五','周六'];
+    html += `<div class="rank-item-wrap">
+      <div class="rank-item" style="cursor:pointer;" onclick="toggleRankDetail('${item.cat.id}')">
+        <div class="rank-num ${topClass}">${i+1}</div>
+        <div class="rank-cat-icon cat-icon ${catClass}">${item.cat.emoji}</div>
+        <div class="rank-info">
+          <div class="rank-cat">${item.cat.name}</div>
+          <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%;background:${palette[i % palette.length]}"></div></div>
+          <div class="rank-percent">占比 ${pct}% · 共 ${detailRecords.length} 笔 ${isExpanded ? '▲' : '▼'}</div>
+        </div>
+        <div class="rank-amount" style="color:${isExp ? 'var(--blue-dark)' : 'var(--pink-dark)'}">${formatMoney(item.amount)}</div>
+      </div>`;
+    if (isExpanded && detailRecords.length) {
+      html += `<div class="rank-detail">`;
+      detailRecords.forEach(r => {
+        const d = parseDayStr(r.date);
+        html += `<div class="rank-detail-item">
+          <div class="rank-detail-date">${r.date.substring(5)} ${weekDays[d.getDay()]}</div>
+          <div class="rank-detail-note">${r.note ? escapeHtml(r.note) : '无备注'}</div>
+          <div class="rank-detail-amount" style="color:${isExp ? 'var(--blue-dark)' : 'var(--pink-dark)'}">${isExp ? '-' : '+'}${formatMoney(r.amount).slice(1)}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
   });
   rankEl.innerHTML = html;
+}
+
+function toggleRankDetail(catId) {
+  state.expandedCatId = (state.expandedCatId === catId) ? null : catId;
+  renderStats();
 }
 
 // ===== Render: Books Page =====
@@ -1652,6 +1773,7 @@ function openBookModal() {
 
 function selectBook(id) {
   state.currentBookId = id;
+  state.expandedCatId = null;
   saveState();
   renderHeader();
   renderRecords();
@@ -1758,7 +1880,7 @@ function deleteCustomCat(cid) {
 
 // ===== Budget Modal =====
 function openBudgetModal() {
-  state.budgetModalType = state.currentBudgetType;
+  state.budgetModalType = getCurrentBudgetType();
   document.querySelectorAll('.budget-type-opt').forEach(o => o.classList.toggle('active', o.dataset.type === state.budgetModalType));
   updateBudgetPeriodLabel();
   const key = getBudgetKey(state.currentBookId, state.budgetModalType);
@@ -1788,9 +1910,11 @@ function saveBudget() {
   saveState();
   closeModal('budgetModal');
   state.currentBudgetType = state.budgetModalType;
-  document.querySelectorAll('.budget-tab').forEach(t => t.classList.toggle('active', t.dataset.type === state.currentBudgetType));
+  setCurrentBudgetType(state.budgetModalType);
+  document.querySelectorAll('.budget-tab').forEach(t => t.classList.toggle('active', t.dataset.type === state.budgetModalType));
   showToast('预算已保存 🦉');
-  renderBudget();
+  renderRecords();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
 }
 
 // ===== Modal Utils =====
@@ -1807,5 +1931,6 @@ loadState();
 renderHeader();
 renderRecords();
 </script>
-</body>
-</html>
+
+
+</body></html>
